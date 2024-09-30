@@ -151,7 +151,7 @@ public class Duplicate_Guids : MonoBehaviour
         }
     }
     // Generates a GUID database from selected assets
-    [MenuItem("Assets/Greenf1re/Show Unique Guids")]
+    [MenuItem("Assets/Greenf1re/Generate Guid Database")]
     public static void ShowUniqueGuids()
     {
         foreach (Object o in Selection.objects)
