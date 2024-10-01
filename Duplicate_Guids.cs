@@ -370,7 +370,11 @@ public class Duplicate_Guids : MonoBehaviour
             if(verbose) Debug.Log("REPLACING " + toReplace);
             try{
                 int guidToReplace_Index = guidDB.guid_value.IndexOf(toReplace);
-                if (guidToReplace_Index < 0 || guidDB.guid_newValues[guidToReplace_Index] == "NOT_SCRIPT") continue;
+                if (guidToReplace_Index < 0){
+                    Debug.LogError("NOT FOUND " + toReplace);
+                    continue;
+                }
+                if( guidDB.guid_newValues[guidToReplace_Index] == "NOT_SCRIPT") continue;
                 else{
                     Debug.Log("REPLACING " + toReplace + " with " + guidDB.guid_newValues[guidToReplace_Index]);//+ guidDB.guid_newValues[guidToReplace_Index]);
                     string newGuid = guidDB.guid_newValues[guidToReplace_Index];
