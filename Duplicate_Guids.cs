@@ -2,7 +2,12 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-
+// Greenf1re
+// Instructions:
+// 1. On old SDK (where prefab's scripts aren't missing) right click prefab, then 1. Generate GUID Database
+// 2. Copy generated database to new SDK. Right click, Set as GuidDB
+// 3. Update GuidDB to V3
+// 4. Right click on prefabs to fix, then "Fix by V3"  
 public class Duplicate_Guids : MonoBehaviour
 {
     static List<string> guids = new List<string>();
@@ -42,7 +47,71 @@ public class Duplicate_Guids : MonoBehaviour
             catch { }
         }
     }
-    [MenuItem("Assets/Greenf1re/GuidDb/Update to V3")]
+    
+    [MenuItem("Assets/Greenf1re/Get Duplicate Guids")]
+    public static void FindDuplicates()
+    {
+        ImportMaterialsRightClick();
+        guidDB = AssetDatabase.LoadAssetAtPath<GuidDatabase>(DB_Path);
+        foreach (string guid in guids)
+        {
+            if(guid == guids[0]) continue;
+            else guidDB.AddGuidPair(guid, guids[0]); 
+       }
+    }
+
+    /*[MenuItem("Assets/Greenf1re/Fix Asset Guids")]
+    public static void FixGuidRefs()
+    {
+        // DB_Path = "Assets/Plugins/Greenf1re/Textures.asset";
+        if(!guidDB){
+            Debug.Log("Loading GUID DB");
+            guidDB = AssetDatabase.LoadAssetAtPath<GuidDatabase>(DB_Path);
+        } 
+
+        foreach (Object o in Selection.objects)
+        {
+            try
+            {
+                var path = AssetDatabase.GetAssetPath(o);
+                string text = File.ReadAllText(path);
+                var (indexes, newYaml) = AllIndexesOf(text);
+                File.WriteAllText(path, newYaml);
+            }
+            catch{Debug.Log("Error in " + AssetDatabase.GetAssetPath(o));}
+        }
+        AssetDatabase.Refresh();
+        //
+    }*/
+
+    // Generates a GUID database from selected assets
+    [MenuItem("Assets/Greenf1re/1. Generate Guid Database")]
+    public static void ShowUniqueGuids()
+    {
+        foreach (Object o in Selection.objects)
+        {
+            try
+            {
+                var path = AssetDatabase.GetAssetPath(o);
+                guidDB = CreateNewDatabase(path.Substring(0, path.LastIndexOf(".")) + ".asset");
+                guidDB.version = 2;
+                string text = File.ReadAllText(path);
+                List<string> newYaml = GetUniqueGuidList(text);
+                foreach (string guid in newYaml){
+                    string guidAssetPath = GetAssetPath(guid);
+                    if(guidAssetPath.Length < 1){
+                        Debug.Log("Not found\n" + guid);
+                        continue;
+                    }
+                    Debug.Log(guidAssetPath.Substring(guidAssetPath.LastIndexOf("/") + 1 ,guidAssetPath.Length - guidAssetPath.LastIndexOf("/") - 1) + "\nAsset: " + guid);
+                    guidDB.AddGuidPair(guidAssetPath.Substring(guidAssetPath.LastIndexOf("/") + 1 ,guidAssetPath.Length - guidAssetPath.LastIndexOf("/") - 1), guid);
+                }
+                // File.WriteAllText(path, newYaml);
+            }
+            catch{Debug.Log("Error in " + AssetDatabase.GetAssetPath(o));}
+        }
+    }
+    [MenuItem("Assets/Greenf1re/GuidDb/Update GuidDB to V3")]
     public static void UpdateToV3()
     {
         // iterate through guidb assets and find guids based on script names
@@ -81,103 +150,6 @@ public class Duplicate_Guids : MonoBehaviour
         }
         guidDB.version = 3;
     }
-    [MenuItem("Assets/Greenf1re/Get Duplicate Guids")]
-    public static void FindDuplicates()
-    {
-        ImportMaterialsRightClick();
-        guidDB = AssetDatabase.LoadAssetAtPath<GuidDatabase>(DB_Path);
-        foreach (string guid in guids)
-        {
-            if(guid == guids[0]) continue;
-            else guidDB.AddGuidPair(guid, guids[0]); 
-       }
-    }
-
-    [MenuItem("Assets/Greenf1re/Fix Asset Guids")]
-    public static void FixGuidRefs()
-    {
-        // DB_Path = "Assets/Plugins/Greenf1re/Textures.asset";
-        if(!guidDB){
-            Debug.Log("Loading GUID DB");
-            guidDB = AssetDatabase.LoadAssetAtPath<GuidDatabase>(DB_Path);
-        } 
-
-        foreach (Object o in Selection.objects)
-        {
-            try
-            {
-                var path = AssetDatabase.GetAssetPath(o);
-                string text = File.ReadAllText(path);
-                var (indexes, newYaml) = AllIndexesOf(text);
-                File.WriteAllText(path, newYaml);
-            }
-            catch{Debug.Log("Error in " + AssetDatabase.GetAssetPath(o));}
-        }
-        AssetDatabase.Refresh();
-        //
-    }
-
-    // For every selected asset, shows GUIDs inside it
-    [MenuItem("Assets/Greenf1re/Show Guids In Asset")]
-    public static void GetAssetGuids()
-    {
-        foreach (Object o in Selection.objects)
-        {
-            try
-            {
-                var path = AssetDatabase.GetAssetPath(o);
-                string text = File.ReadAllText(path);
-                Debug.Log("Current ASSET: ");
-                AllIndexesOf(text,true);
-            }
-            catch{}
-        }
-    }
-
-    // Shows GUID of selected assets
-    [MenuItem("Assets/Greenf1re/Show Asset Guid")]
-    public static void ShowGuids()
-    {
-        foreach (Object o in Selection.objects)
-        {
-            try
-            {
-                var path = AssetDatabase.GetAssetPath(o);
-                string cur_guid = AssetDatabase.AssetPathToGUID(path);
-                Debug.Log("Asset PATH: " + path);
-                Debug.Log(cur_guid);
-            }
-            catch{}
-        }
-    }
-    // Generates a GUID database from selected assets
-    [MenuItem("Assets/Greenf1re/Generate Guid Database")]
-    public static void ShowUniqueGuids()
-    {
-        foreach (Object o in Selection.objects)
-        {
-            try
-            {
-                var path = AssetDatabase.GetAssetPath(o);
-                guidDB = CreateNewDatabase(path.Substring(0, path.LastIndexOf(".")) + ".asset");
-                guidDB.version = 2;
-                string text = File.ReadAllText(path);
-                List<string> newYaml = GetUniqueGuidList(text);
-                foreach (string guid in newYaml){
-                    string guidAssetPath = GetAssetPath(guid);
-                    if(guidAssetPath.Length < 1){
-                        Debug.Log("Not found\n" + guid);
-                        continue;
-                    }
-                    Debug.Log(guidAssetPath.Substring(guidAssetPath.LastIndexOf("/") + 1 ,guidAssetPath.Length - guidAssetPath.LastIndexOf("/") - 1) + "\nAsset: " + guid);
-                    guidDB.AddGuidPair(guidAssetPath.Substring(guidAssetPath.LastIndexOf("/") + 1 ,guidAssetPath.Length - guidAssetPath.LastIndexOf("/") - 1), guid);
-                }
-                // File.WriteAllText(path, newYaml);
-            }
-            catch{Debug.Log("Error in " + AssetDatabase.GetAssetPath(o));}
-        }
-    }
-
     [MenuItem("Assets/Greenf1re/Fix From GuidDB v2")]
     public static void FixFromGuidDbv2()
     {
@@ -237,10 +209,46 @@ public class Duplicate_Guids : MonoBehaviour
                 }
                 // var (indexes, newYaml) = FixByV3(text);
             }
-            catch{Debug.Log("Error in " + AssetDatabase.GetAssetPath(o));}
+            catch{
+                Debug.Log("Error in " + AssetDatabase.GetAssetPath(o));
+                // print caught error
+            }
         }
         AssetDatabase.Refresh();
         //
+    }
+    // For every selected asset, shows GUIDs inside it
+    [MenuItem("Assets/Greenf1re/Inspect/Show Guids In Asset")]
+    public static void GetAssetGuids()
+    {
+        foreach (Object o in Selection.objects)
+        {
+            try
+            {
+                var path = AssetDatabase.GetAssetPath(o);
+                string text = File.ReadAllText(path);
+                Debug.Log("Current ASSET: ");
+                AllIndexesOf(text,true);
+            }
+            catch{}
+        }
+    }
+
+    // Shows GUID of selected assets
+    [MenuItem("Assets/Greenf1re/Inspect/Show Asset Guid")]
+    public static void ShowGuids()
+    {
+        foreach (Object o in Selection.objects)
+        {
+            try
+            {
+                var path = AssetDatabase.GetAssetPath(o);
+                string cur_guid = AssetDatabase.AssetPathToGUID(path);
+                Debug.Log("Asset PATH: " + path);
+                Debug.Log(cur_guid);
+            }
+            catch{}
+        }
     }
     static string GetAssetPath(string guid)
     {
@@ -362,9 +370,9 @@ public class Duplicate_Guids : MonoBehaviour
             if(verbose) Debug.Log("REPLACING " + toReplace);
             try{
                 int guidToReplace_Index = guidDB.guid_value.IndexOf(toReplace);
-                if (guidToReplace_Index < 0) continue;
+                if (guidToReplace_Index < 0 || guidDB.guid_newValues[guidToReplace_Index] == "NOT_SCRIPT") continue;
                 else{
-                    Debug.Log("REPLACING " + toReplace + " with " );//+ guidDB.guid_newValues[guidToReplace_Index]);
+                    Debug.Log("REPLACING " + toReplace + " with " + guidDB.guid_newValues[guidToReplace_Index]);//+ guidDB.guid_newValues[guidToReplace_Index]);
                     string newGuid = guidDB.guid_newValues[guidToReplace_Index];
                     str = str.Replace(toReplace, newGuid);
                 }
